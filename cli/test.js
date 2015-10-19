@@ -12,7 +12,7 @@ nodecastor.scan()
             console.log('Application', util.inspect(a));
             a.run('urn:x-cast:es.offd.dashcast', function(err, s) {
               if (!err) {
-                s.send('http://theregister.co.uk');
+                s.send({url: "http://codepen.io/fleeting/full/xklfq/"});
               }
             });
           }
