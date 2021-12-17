@@ -1,0 +1,5 @@
+[user]
+    name = samkirsch10
+
+[core]
+    sshCommand "ssh -i ~/.ssh/git_samkirsch10 _F /dev/null"
