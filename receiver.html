@@ -160,7 +160,7 @@
         }
 
         // initialize the CastReceiverManager with an application status message
-        window.castReceiverManager.start({statusText: "Application is starting", disableIdleTimeout: true});
+        window.castReceiverManager.start({statusText: "Application is starting", disableIdleTimeout: true, maxInactivity:604800});
       };
     
     </script>
