@@ -3,77 +3,77 @@
   <head>
   <title>DashCast</title>
     <style type="text/css">
-    html{
-      height: 100%;
-      padding:0;
-      width: 100%;
-    }
-	  body {
-	    overflow:hidden;
-      height: 100%;
-      padding: 0;
-      margin: 0;
-      background: black url("loading.png") no-repeat 50% 50%;
-	  }
+      html {
+        height: 100%;
+        padding: 0;
+        width: 100%;
+      }
+      body {
+        overflow: hidden;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+        background: black url("loading.png") no-repeat 50% 50%;
+      }
 
-    #main{
-      height: 100%;
-      background: black url("bg1.png") no-repeat 50% 50%;
-      opacity: 0;
-      transition: opacity 4s ease;
-    }
+      #main {
+        height: 100%;
+        background: black url("bg1.png") no-repeat 50% 50%;
+        opacity: 0;
+        transition: opacity 4s ease;
+      }
 
-    #main, iframe{
-      background: black url("bg1.png") no-repeat 50% 50%;
-    }
+      #main, iframe {
+        background: black url("bg1.png") no-repeat 50% 50%;
+      }
 
-    #main.show{
-      opacity: 1;
-    }
+      #main.show {
+        opacity: 1;
+      }
 
-    #status{
-      transition: opacity 1s;
-      position: absolute;
-      bottom:0;
-      left:0;
-      right:0;
-      color: #555;
-      font-weight: bold;
-      height: 1.2em;
-      text-align: center; 
-      padding: 10px;
-      background: rgba(32, 27,37,0.9);
-      z-index: 10;
-    }
+      #status {
+        transition: opacity 1s;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        color: #555;
+        font-weight: bold;
+        height: 1.2em;
+        text-align: center; 
+        padding: 10px;
+        background: rgba(32, 27, 37, 0.9);
+        z-index: 10;
+      }
 
-    #status.empty{
-      opacity: 0;
-    }
+      #status.empty {
+        opacity: 0;
+      }
     
-    iframe{
-      position: absolute;
-      left:0; top:0; right:0; bottom:0;
-      opacity: 0;
-      transition: opacity 0;
-      width: 100%;
-      height: 100%;
-      border: 0 transparent;
-    }
-    iframe.show{
-      transition: opacity 1s;
-      opacity: 1;
-    }
+      iframe {
+        position: absolute;
+        left: 0; top: 0; right: 0; bottom: 0;
+        opacity: 0;
+        transition: opacity 0;
+        width: 100%;
+        height: 100%;
+        border: 0 transparent;
+      }
 
+      iframe.show {
+        transition: opacity 1s;
+        opacity: 1;
+      }
     </style>
   </head>
   <body id="dcast">
 	 
-  <div id="main" class="fade">
-    <iframe id="if1"></iframe>
-    <iframe id="if2"></iframe>
-  </div>
-  <div id="status" class="empty">
-  </div>
+    <div id="main" class="fade">
+      <iframe id="if1"></iframe>
+      <iframe id="if2"></iframe>
+    </div>
+    <div id="status" class="empty">
+    </div>
 
     <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
     <script type="text/javascript">
