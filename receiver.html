@@ -8,6 +8,7 @@
         padding: 0;
         width: 100%;
       }
+
       body {
         overflow: hidden;
         height: 100%;
@@ -81,6 +82,42 @@
       var reload_time = 0;
       var timer_id = null;
 
+      // Taken from: https://github.com/home-assistant/frontend/blob/dev/cast/src/receiver/entrypoint.ts
+      function playDummyMedia() {
+        const loadRequestData = new cast.framework.messages.LoadRequestData();
+        loadRequestData.autoplay = true;
+        loadRequestData.media = new cast.framework.messages.MediaInformation();
+        loadRequestData.media.contentId = "https://swiergot.github.io/dashcast/loading.png";
+        loadRequestData.media.contentType = "image/jpeg";
+        loadRequestData.media.streamType = cast.framework.messages.StreamType.NONE;
+        const metadata = new cast.framework.messages.GenericMediaMetadata();
+        metadata.title = "Dummy " + (new Date().toTimeString());
+        loadRequestData.media.metadata = metadata;
+        loadRequestData.requestId = 0;
+        window.playerManager.load(loadRequestData);
+        window.setTimeout(playDummyMedia, 60 * 9 * 1000);
+      }
+
+      function removeTouchControls() {
+        var controls = document.body.querySelector("touch-controls");
+        if (controls) {
+          controls.remove();
+        }
+      }
+
+      function setupMutationObserver() {
+        // This is to allow the touch display to work
+        const observer = new MutationObserver(removeTouchControls);
+        observer.observe(document.body, { childList: true, subtree: true });
+      }
+
+      function createMediaPlayer() {
+        const mediaPlayer = document.createElement("cast-media-player");
+        mediaPlayer.style.display = "none";
+        document.body.append(mediaPlayer);
+        setupMutationObserver();
+      }
+
       window.onload = function() {
         var main = document.getElementById("main");
         var status = document.getElementById("status");
@@ -137,12 +174,16 @@
           window.setTimeout(function() { window.location = url; }, 1000);
         }
 
+        createMediaPlayer();
+
         window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
         window.castReceiverContext.setLoggerLevel(cast.framework.LoggerLevel.DEBUG);
         window.castReceiverContext.addEventListener(cast.framework.system.EventType.READY, function(event) {
           window.castReceiverContext.setApplicationState("Application ready");
           setStatus("Waiting for address")
         });
+
+        window.playerManager = window.castReceiverContext.getPlayerManager();
 
         const options = new cast.framework.CastReceiverOptions();
         const customNS = "urn:x-cast:es.offd.dashcast";
@@ -155,6 +196,9 @@
           if (msg.force) {
             return loadPage(msg.url);
           }
+
+          playDummyMedia();
+
           loadFrame(msg.url, (msg.reload) ? parseInt(msg.reload_time, 10) : 0);
           // inform all senders on the message bus of the incoming message event
           // sender message listener will be invoked
