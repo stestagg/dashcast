@@ -3,83 +3,120 @@
   <head>
   <title>DashCast</title>
     <style type="text/css">
-    html{
-      height: 100%;
-      padding:0;
-      width: 100%;
-    }
-	  body {
-	    overflow:hidden;
-      height: 100%;
-      padding: 0;
-      margin: 0;
-      background: black url("loading.png") no-repeat 50% 50%;
-	  }
+      html {
+        height: 100%;
+        padding: 0;
+        width: 100%;
+      }
 
-    #main{
-      height: 100%;
-      background: black url("bg1.png") no-repeat 50% 50%;
-      opacity: 0;
-      transition: opacity 4s ease;
-    }
+      body {
+        overflow: hidden;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+        background: black url("loading.png") no-repeat 50% 50%;
+      }
 
-    #main, iframe{
-      background: black url("bg1.png") no-repeat 50% 50%;
-    }
+      #main {
+        height: 100%;
+        background: black url("bg1.png") no-repeat 50% 50%;
+        opacity: 0;
+        transition: opacity 4s ease;
+      }
 
-    #main.show{
-      opacity: 1;
-    }
+      #main, iframe {
+        background: black url("bg1.png") no-repeat 50% 50%;
+      }
 
-    #status{
-      transition: opacity 1s;
-      position: absolute;
-      bottom:0;
-      left:0;
-      right:0;
-      color: #555;
-      font-weight: bold;
-      height: 1.2em;
-      text-align: center; 
-      padding: 10px;
-      background: rgba(32, 27,37,0.9);
-      z-index: 10;
-    }
+      #main.show {
+        opacity: 1;
+      }
 
-    #status.empty{
-      opacity: 0;
-    }
+      #status {
+        transition: opacity 1s;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        color: #555;
+        font-weight: bold;
+        height: 1.2em;
+        text-align: center; 
+        padding: 10px;
+        background: rgba(32, 27, 37, 0.9);
+        z-index: 10;
+      }
+
+      #status.empty {
+        opacity: 0;
+      }
     
-    iframe{
-      position: absolute;
-      left:0; top:0; right:0; bottom:0;
-      opacity: 0;
-      transition: opacity 0;
-      width: 100%;
-      height: 100%;
-      border: 0 transparent;
-    }
-    iframe.show{
-      transition: opacity 1s;
-      opacity: 1;
-    }
+      iframe {
+        position: absolute;
+        left: 0; top: 0; right: 0; bottom: 0;
+        opacity: 0;
+        transition: opacity 0;
+        width: 100%;
+        height: 100%;
+        border: 0 transparent;
+      }
 
+      iframe.show {
+        transition: opacity 1s;
+        opacity: 1;
+      }
     </style>
   </head>
   <body id="dcast">
 	 
-  <div id="main" class="fade">
-    <iframe id="if1"></iframe>
-    <iframe id="if2"></iframe>
-  </div>
-  <div id="status" class="empty">
-  </div>
+    <div id="main" class="fade">
+      <iframe id="if1"></iframe>
+      <iframe id="if2"></iframe>
+    </div>
+    <div id="status" class="empty">
+    </div>
 
-    <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
+    <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
     <script type="text/javascript">
 
       var reload_time = 0;
       var timer_id = null;
+
+      // Taken from: https://github.com/home-assistant/frontend/blob/dev/cast/src/receiver/entrypoint.ts
+      function playDummyMedia() {
+        const loadRequestData = new cast.framework.messages.LoadRequestData();
+        loadRequestData.autoplay = true;
+        loadRequestData.media = new cast.framework.messages.MediaInformation();
+        loadRequestData.media.contentId = "https://stestagg.github.io/dashcast/loading.png";
+        loadRequestData.media.contentType = "image/jpeg";
+        loadRequestData.media.streamType = cast.framework.messages.StreamType.NONE;
+        const metadata = new cast.framework.messages.GenericMediaMetadata();
+        metadata.title = "Dummy " + (new Date().toTimeString());
+        loadRequestData.media.metadata = metadata;
+        loadRequestData.requestId = 0;
+        window.playerManager.load(loadRequestData);
+        window.setTimeout(playDummyMedia, 60 * 9 * 1000);
+      }
+
+      function removeTouchControls() {
+        var controls = document.body.querySelector("touch-controls");
+        if (controls) {
+          controls.remove();
+        }
+      }
+
+      function setupMutationObserver() {
+        // This is to allow the touch display to work
+        const observer = new MutationObserver(removeTouchControls);
+        observer.observe(document.body, { childList: true, subtree: true });
+      }
+
+      function createMediaPlayer() {
+        const mediaPlayer = document.createElement("cast-media-player");
+        mediaPlayer.style.display = "none";
+        document.body.append(mediaPlayer);
+        setupMutationObserver();
+      }
 
       window.onload = function() {
         var main = document.getElementById("main");
@@ -137,30 +174,42 @@
           window.setTimeout(function() { window.location = url; }, 1000);
         }
 
-        cast.receiver.logger.setLevelValue(0);
-        window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
-        castReceiverManager.onReady = function(event) {
-          window.castReceiverManager.setApplicationState("Application ready");
-          setStatus("Waiting for address")
-        };
-        
-        // create a CastMessageBus to handle messages for a custom namespace
-        window.messageBus = window.castReceiverManager.getCastMessageBus('urn:x-cast:es.offd.dashcast');
+        createMediaPlayer();
 
-        // handler for the CastMessageBus message event
-        window.messageBus.onMessage = function(event) {
-          var msg = JSON.parse(event.data);
+        window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
+        window.castReceiverContext.setLoggerLevel(cast.framework.LoggerLevel.DEBUG);
+        window.castReceiverContext.addEventListener(cast.framework.system.EventType.READY, function(event) {
+          window.castReceiverContext.setApplicationState("Application ready");
+          setStatus("Waiting for address")
+        });
+
+        window.playerManager = window.castReceiverContext.getPlayerManager();
+
+        const options = new cast.framework.CastReceiverOptions();
+        const customNS = "urn:x-cast:es.offd.dashcast";
+
+        options.customNamespaces = {};
+        options.customNamespaces[customNS] = cast.framework.system.MessageType.JSON;
+
+        window.castReceiverContext.addCustomMessageListener(customNS, function(event) {
+          var msg = event.data;
           if (msg.force) {
             return loadPage(msg.url);
           }
-          loadFrame(msg.url, (msg.reload) ? parseInt(msg.reload_time, 10) : 0);
-          // inform all senders on the CastMessageBus of the incoming message event
-          // sender message listener will be invoked
-          window.messageBus.send(event.senderId, event.data);
-        }
 
-        // initialize the CastReceiverManager with an application status message
-        window.castReceiverManager.start({statusText: "Application is starting"});
+          playDummyMedia();
+
+          loadFrame(msg.url, (msg.reload) ? parseInt(msg.reload_time, 10) : 0);
+          // inform all senders on the message bus of the incoming message event
+          // sender message listener will be invoked
+          window.castReceiverContext.sendCustomMessage(customNS, event.senderId, event.data);
+        });
+
+        options.statusText = "Application is starting";
+        options.disableIdleTimeout = true;
+
+        // initialize the CastReceiverContext with options
+        window.castReceiverContext.start(options);
       };
     
     </script>
